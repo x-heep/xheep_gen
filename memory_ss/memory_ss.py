@@ -204,6 +204,16 @@ class MemorySS:
         """
         return self._ram_start_address
 
+    def ram_end_address(self) -> int:
+        """
+        :return: the exclusive end address of the last ram bank, or the start
+            address when no banks have been added yet.
+        :rtype: int
+        """
+        if len(self._ram_banks) == 0:
+            return self._ram_start_address
+        return self._ram_banks[-1].end_address()
+
     def ram_numbanks(self) -> int:
         """
         :return: the number of banks.

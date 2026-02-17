@@ -7,7 +7,10 @@ from abc import (
 )  # Used to define abstract classes that cannot be instantiated, only well defined subclasses can be instantiated.
 from enum import Enum
 from copy import deepcopy
-from typing import List
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..bus import Bus
 
 
 class Peripheral(ABC):
@@ -103,10 +106,14 @@ class PeripheralDomain(ABC):
         :param int start_address: The start address of the peripheral domain.
         :param int length: The length of the peripheral domain.
         """
+        from ..bus import Bus, BusType
+
         self._name = f"{name} Peripheral Domain"
         self._start_address = start_address
         self._length = length
         self._peripherals = []
+        self._bus: Bus = Bus(BusType.onetoM)
+        self._bus.add_master(f"{name}_demux")
 
     @abstractmethod
     def add_peripheral(self, peripheral: Peripheral):
@@ -285,6 +292,27 @@ class PeripheralDomain(ABC):
         # Setting peripherals addresses if there is enough space
         for idx, _ in peripherals_without_address:
             self._peripherals[idx].set_address(offsets[idx])
+
+        # Populate the internal bus with one slave per peripheral.
+        # Addresses are local offsets (relative to the domain start).
+        self._bus._slaves.clear()
+        self._bus._next_slave_idx = 0
+        for p in self._peripherals:
+            if p is not None and p.get_address() is not None:
+                self._bus.add_slave(
+                    name=p.get_name(),
+                    start_address=p.get_address(),
+                    length=p.get_length(),
+                )
+
+    def get_bus(self) -> "Bus":
+        """
+        :return: The internal bus that sub-addresses the peripherals in this
+            domain.  Slave addresses are local offsets (0-based, relative to
+            the domain start address).
+        :rtype: Bus
+        """
+        return self._bus
 
     def validate(self):
         """

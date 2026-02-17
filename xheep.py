@@ -1,22 +1,24 @@
-import sys
 from copy import deepcopy
-from .bus_type import BusType
-from .memory_ss.memory_ss import MemorySS
-from .cpu.cpu import CPU
+from typing import Optional
+from .bus import Bus, BusType
 from .cv_x_if import CvXIf
+from .memory_ss.memory_ss import MemorySS
 from .peripherals.abstractions import PeripheralDomain
 from .peripherals.base_peripherals_domain import BasePeripheralDomain
 from .peripherals.user_peripherals_domain import UserPeripheralDomain
-from .pads.pad_ring import PadRing
+from .system import System
 
 
-class XHeep:
+class XHeep(System):
     """
     Represents the whole X-HEEP system.
 
     An instance of this class is passed to the mako templates.
+    Inherits generic SoC functionality from :class:`System` and adds
+    X-HEEP-specific features (CV-X-IF, memory subsystem, interleaved-memory
+    bus checks, base/user peripheral domain management, etc.).
 
-    :param BusType bus_type: The bus type chosen for this mcu.
+    :param Bus bus: The bus configuration for this system.
     :raise TypeError: when parameters are of incorrect type.
     """
 
@@ -25,48 +27,13 @@ class XHeep:
 
     def __init__(
         self,
-        bus_type: BusType,
+        bus: Bus,
     ):
-        if not type(bus_type) is BusType:
-            raise TypeError(
-                f"XHeep.bus_type should be of type BusType not {type(self._bus_type)}"
-            )
-
-        self._cpu = None
-
-        self._xif: CvXIf = None
-
-        self._bus_type: BusType = bus_type
-
-        self._memory_ss = None
-
-        self._base_peripheral_domain = None
-        self._user_peripheral_domain = None
-        self._padring: PadRing = None
-
-        self._extensions = {}
-
-    # ------------------------------------------------------------
-    # CPU
-    # ------------------------------------------------------------
-
-    def set_cpu(self, cpu: CPU):
-        """
-        Sets the CPU of the system.
-
-        :param CPU cpu: The CPU to set.
-        :raise TypeError: when cpu is of incorrect type.
-        """
-        if not isinstance(cpu, CPU):
-            raise TypeError(f"XHeep.cpu should be of type CPU not {type(self._cpu)}")
-        self._cpu = cpu
-
-    def cpu(self) -> CPU:
-        """
-        :return: the configured CPU
-        :rtype: CPU
-        """
-        return self._cpu
+        super().__init__(bus)
+        self._xif: Optional[CvXIf] = None
+        self._memory_ss: Optional[MemorySS] = None
+        self._base_peripheral_domain: Optional[BasePeripheralDomain] = None
+        self._user_peripheral_domain: Optional[UserPeripheralDomain] = None
 
     # ------------------------------------------------------------
     # CORE-V eXtension Interface (CV-X-IF)
@@ -84,63 +51,39 @@ class XHeep:
             raise TypeError(f"XHeep.xif should be of type CvXIf not {type(xif)}")
         self._xif = xif
 
-    def xif(self) -> CvXIf:
+    def xif(self) -> Optional[CvXIf]:
         """
         :return: the configured CV-X-IF
-        :rtype: CvXIf
+        :rtype: Optional[CvXIf]
         """
         return self._xif
 
     # ------------------------------------------------------------
-    # Bus
-    # ------------------------------------------------------------
-
-    def set_bus_type(self, bus_type: BusType):
-        """
-        Sets the bus type of the system.
-
-        :param BusType bus_type: The bus type to set.
-        :raise TypeError: when bus_type is of incorrect type.
-        """
-        if not type(bus_type) is BusType:
-            raise TypeError(
-                f"XHeep.bus_type should be of type BusType not {type(self._bus_type)}"
-            )
-        self._bus_type = bus_type
-
-    def bus_type(self) -> BusType:
-        """
-        :return: the configured bus type
-        :rtype: BusType
-        """
-        return self._bus_type
-
-    # ------------------------------------------------------------
-    # Memory
+    # Memory Subsystem (X-HEEP specific)
     # ------------------------------------------------------------
 
     def set_memory_ss(self, memory_ss: MemorySS):
         """
-        Sets the memory subsystem of the system.
+        Sets the memory subsystem.
 
         :param MemorySS memory_ss: The memory subsystem to set.
         :raise TypeError: when memory_ss is of incorrect type.
         """
         if not isinstance(memory_ss, MemorySS):
             raise TypeError(
-                f"XHeep.memory_ss should be of type MemorySS not {type(self._memory_ss)}"
+                f"XHeep.memory_ss should be of type MemorySS not {type(memory_ss)}"
             )
         self._memory_ss = memory_ss
 
-    def memory_ss(self) -> MemorySS:
+    def memory_ss(self) -> Optional[MemorySS]:
         """
         :return: the configured memory subsystem
-        :rtype: MemorySS
+        :rtype: Optional[MemorySS]
         """
         return self._memory_ss
 
     # ------------------------------------------------------------
-    # Peripherals
+    # Peripheral Domains (X-HEEP specific)
     # ------------------------------------------------------------
 
     def are_base_peripherals_configured(self) -> bool:
@@ -169,14 +112,19 @@ class XHeep:
 
     def add_peripheral_domain(self, domain: PeripheralDomain):
         """
-        Add a peripheral domain to the system. The domain should already contain all peripherals well configured. When adding a domain, a deepcopy is made to avoid side effects.
+        Add a peripheral domain to the system. The domain should already
+        contain all peripherals well configured. When adding a domain, a
+        deepcopy is made to avoid side effects and the domain is also
+        registered in the generic peripheral subsystems list.
 
         :param PeripheralDomain domain: The domain to add.
         """
         if isinstance(domain, BasePeripheralDomain):
             self._base_peripheral_domain = deepcopy(domain)
+            super().add_peripheral_domain(domain)
         elif isinstance(domain, UserPeripheralDomain):
             self._user_peripheral_domain = deepcopy(domain)
+            super().add_peripheral_domain(domain)
         else:
             raise ValueError(
                 "Domain is neither a BasePeripheralDomain nor a UserPeripheralDomain"
@@ -201,151 +149,61 @@ class XHeep:
         return deepcopy(self._base_peripheral_domain)
 
     # ------------------------------------------------------------
-    # Pad Ring
-    # ------------------------------------------------------------
-
-    def set_padring(self, pad_ring: PadRing):
-        """
-        Sets the pad ring of the system.
-
-        :param PadRing pad_ring: The pad ring to set.
-        :raise TypeError: when pad_ring is of incorrect type.
-        """
-        if not isinstance(pad_ring, PadRing):
-            raise TypeError(
-                f"xheep.get_padring() should be of type PadRing not {type(self._padring)}"
-            )
-        self._padring = pad_ring
-
-    def get_padring(self):
-        return self._padring
-
-    # ------------------------------------------------------------
-    # Extensions
-    # ------------------------------------------------------------
-
-    def add_extension(self, name, extension):
-        """
-        Register an external extension or configuration (object, dict, etc.).
-
-        :param str name: Name of the extension.
-        :param Any extension: The extension object.
-        """
-        self._extensions[name] = extension
-
-    def get_extension(self, name):
-        """
-        Retrieve a previously registered extension.
-
-        :param str name: Name of the extension.
-        :return: The extension object.
-        :rtype: Any
-        """
-        return self._extensions.get(name, None)
-
-    def is_extension_defined(self, name):
-        """
-        Check if an extension is defined.
-
-        :param str name: Name of the extension.
-        :return: `True` if the extension is defined, `False` otherwise.
-        :rtype: bool
-        """
-        return name in self._extensions
-
-    # ------------------------------------------------------------
     # Build and Validate
     # ------------------------------------------------------------
 
     def build(self):
         """
-        Makes the system ready to be used.
-        """
+        Makes the X-HEEP system ready to be used.
 
-        if self.memory_ss():
-            self.memory_ss().build()
-        if self.are_base_peripherals_configured():
-            self._base_peripheral_domain.build()
-        if self.are_user_peripherals_configured():
-            self._user_peripheral_domain.build()
+        Builds the memory subsystem, then delegates to the parent which
+        builds all peripheral domains.
+        """
+        if self._memory_ss:
+            self._memory_ss.build()
+        super().build()
 
     def validate(self):
         """
-        Does some basics checks on the configuration
+        Does some basics checks on the X-HEEP configuration.
+
+        Calls the parent :meth:`System.validate` first, then performs
+        X-HEEP-specific checks (interleaved memory bus compatibility,
+        base peripheral address constraint, CV-X-IF core compatibility).
 
         This should be called before using the XHeep object to generate the project.
         """
-        if not self.cpu():
-            raise RuntimeError("[MCU-GEN] ERROR: A CPU must be configured")
+        super().validate()
 
-        if not self.memory_ss():
+        # Memory subsystem is required for X-HEEP
+        if not self._memory_ss:
             raise RuntimeError("[MCU-GEN] ERROR: A memory subsystem must be configured")
-        self.memory_ss().validate()
+        self._memory_ss.validate()
 
-        if self.memory_ss().has_il_ram() and (
-            self._bus_type not in self.IL_COMPATIBLE_BUS_TYPES
+        # Interleaved memory requires a compatible bus type
+        if self._memory_ss.has_il_ram() and (
+            self.bus_type() not in self.IL_COMPATIBLE_BUS_TYPES
         ):
             raise RuntimeError(
-                f"[MCU-GEN] ERROR: This system has a {self._bus_type} bus, one of {self.IL_COMPATIBLE_BUS_TYPES} is required for interleaved memory"
+                f"[MCU-GEN] ERROR: This system has a {self.bus_type()} bus, one of {self.IL_COMPATIBLE_BUS_TYPES} is required for interleaved memory"
             )
 
-        # Check that each peripheral domain is valid
+        # Base peripheral start address constraint
         if self.are_base_peripherals_configured():
-            self._base_peripheral_domain.validate()
-        if self.are_user_peripherals_configured():
-            self._user_peripheral_domain.validate()
-
-        # Check that peripherals domains do not overlap
-        if (
-            self.are_base_peripherals_configured()
-            and self._base_peripheral_domain.get_start_address()
-            < self._user_peripheral_domain.get_start_address()
-            and self._base_peripheral_domain.get_start_address()
-            + self._base_peripheral_domain.get_length()
-            > self._user_peripheral_domain.get_start_address()
-        ):  # base peripheral domain comes before user peripheral domain
-            raise RuntimeError(
-                f"[MCU-GEN] ERROR: The base peripheral domain (ends at {self._base_peripheral_domain.get_start_address() + self._base_peripheral_domain.get_length():#08X}) overflows over user peripheral domain (starts at {self._user_peripheral_domain.get_start_address():#08X})."
-            )
-
-        if (
-            self.are_user_peripherals_configured()
-            and self._user_peripheral_domain.get_start_address()
-            < self._base_peripheral_domain.get_start_address()
-            and self._user_peripheral_domain.get_start_address()
-            + self._user_peripheral_domain.get_length()
-            > self._base_peripheral_domain.get_start_address()
-        ):  # user peripheral domain comes before base peripheral domain
-            raise RuntimeError(
-                f"[MCU-GEN] ERROR: The user peripheral domain (ends at {self._user_peripheral_domain.get_start_address() + self._user_peripheral_domain.get_length():#08X}) overflows over base peripheral domain (starts at {self._base_peripheral_domain.get_start_address():#08X})."
-            )
-
-        if (
-            self.are_user_peripherals_configured()
-            and self.are_base_peripherals_configured()
-            and self._user_peripheral_domain.get_start_address()
-            == self._base_peripheral_domain.get_start_address()
-        ):  # both domains start at the same address
-            raise RuntimeError(
-                f"[MCU-GEN] ERROR: The base peripheral domain and the user peripheral domain should not start at the same address (current addresses are {self._base_peripheral_domain.get_start_address():#08X} and {self._user_peripheral_domain.get_start_address():#08X})."
-            )
-
-        if (
-            self.are_base_peripherals_configured()
-            and self._base_peripheral_domain.get_start_address() < 0x10000
-        ):  # from mcu_gen.py
-            raise RuntimeError(
-                f"[MCU-GEN] ERROR: Always on peripheral start address must be greater than 0x10000, current address is {self._base_peripheral_domain.get_start_address():#08X}."
-            )
+            assert self._base_peripheral_domain is not None
+            if (
+                self._base_peripheral_domain.get_start_address() < 0x10000
+            ):  # from mcu_gen.py
+                raise RuntimeError(
+                    f"[MCU-GEN] ERROR: Always on peripheral start address must be greater than 0x10000, current address is {self._base_peripheral_domain.get_start_address():#08X}."
+                )
 
         # Check that the extension interface is enabled with a supported core
-        if self.xif() is not None and self.cpu().get_name() in ["cv32e40p"]:
+        cpu = self.cpu()
+        assert cpu is not None  # guaranteed by super().validate()
+        if self.xif() is not None and cpu.get_name() in ["cv32e40p"]:
             raise RuntimeError(
-                f"[MCU-GEN] ERROR: CV-X-IF enabled (xheep.set_xif()) with incompatible CPU ({self.cpu().get_name()})."
+                f"[MCU-GEN] ERROR: CV-X-IF enabled (xheep.set_xif()) with incompatible CPU ({cpu.get_name()})."
             )
-
-        if not self._padring:
-            raise RuntimeError("[MCU-GEN] ERROR: A padring must be configured")
-        self._padring.validate()
 
         return True
