@@ -11,7 +11,8 @@ from .cpu.cv32e40x import cv32e40x
 from .memory_ss.memory_ss import MemorySS
 from .memory_ss.linker_section import LinkerSection
 from .peripherals.peripheral_config_loader import load_peripherals_config
-from .xheep import BusType, XHeep, CvXIf
+from .bus import Bus, BusType
+from .xheep import XHeep, CvXIf
 
 
 def to_int(input) -> Union[int, None]:
@@ -270,7 +271,7 @@ def load_cfg_hjson(src: str) -> XHeep:
     if cpu_type_config is None:
         raise RuntimeError("No CPU type configuration found")
 
-    system = XHeep(BusType(bus_config))
+    system = XHeep(Bus(BusType(bus_config)))
     memory_ss = MemorySS()
 
     load_ram_config(memory_ss, mem_config)
