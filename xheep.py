@@ -29,7 +29,8 @@ class XHeep(System):
         self,
         bus: Bus,
     ):
-        super().__init__(bus)
+        super().__init__()
+        super().set_bus(bus)
         self._xif: Optional[CvXIf] = None
         self._memory_ss: Optional[MemorySS] = None
         self._base_peripheral_domain: Optional[BasePeripheralDomain] = None
