@@ -144,9 +144,6 @@ def generate_xheep(args):
     # Validate the configuration, performing some sanity checks
     xheep.validate()
 
-    stack_size = f"{xheep.memory_ss().stack_size():X}"
-    heap_size = f"{xheep.memory_ss().heap_size():X}"
-
     kwargs = {
         "xheep": xheep,
         "debug_start_address": debug_start_address,
@@ -158,8 +155,6 @@ def generate_xheep(args):
         "flash_mem_size_address": flash_mem_size_address,
         "serial_link_start_address": serial_link_start_address,
         "serial_link_size_address": serial_link_size_address,
-        "stack_size": stack_size,
-        "heap_size": heap_size,
         "plic_used_n_interrupts": plic_used_n_interrupts,
         "plit_n_interrupts": plit_n_interrupts,
         "interrupts": interrupts,
