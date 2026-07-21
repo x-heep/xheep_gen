@@ -160,7 +160,7 @@ class XHeep:
             )        
         self._linker_script_config = linker_script_config
 
-    def linker_script_config(self) -> LinkerScript:
+    def linker_script(self) -> LinkerScript:
         """
         :return: the linker script configuration
         :rtype: LinkerScript
@@ -306,7 +306,8 @@ class XHeep:
 
         if self.memory_ss():
             self.memory_ss().build()
-            self.linker_script_config().build(self.memory_ss().linker_data_region_size())
+        if self.linker_script():
+            self.linker_script().build(self.memory_ss().linker_data_region_size())
         if self.are_base_peripherals_configured():
             self._base_peripheral_domain.build()
         if self.are_user_peripherals_configured():
@@ -323,8 +324,12 @@ class XHeep:
 
         if not self.memory_ss():
             raise RuntimeError("[MCU-GEN] ERROR: A memory subsystem must be configured")
+        
+        if not self.linker_script():
+            raise RuntimeError("[MCU-GEN] ERROR: A linker script instance must be configured")
+        
         self.memory_ss().validate()
-        self.linker_script_config().validate(self.memory_ss().linker_data_region_size())
+        self.linker_script().validate(self.memory_ss().linker_data_region_size())
 
         if self.memory_ss().has_il_ram() and (
             self._bus_type not in self.IL_COMPATIBLE_BUS_TYPES
