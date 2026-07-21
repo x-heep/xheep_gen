@@ -43,9 +43,13 @@ class LinkerScript:
         for the missing value.
         """
         if type(available_size) is not int:
-            raise TypeError("[MCU-GEN - LinkerScript] ERROR: available_size should be an int")
+            raise TypeError(
+                "[MCU-GEN - LinkerScript] ERROR: available_size should be an int"
+            )
         if available_size <= 0:
-            raise ValueError("[MCU-GEN - LinkerScript] ERROR: available_size should be strictly positive")
+            raise ValueError(
+                "[MCU-GEN - LinkerScript] ERROR: available_size should be strictly positive"
+            )
 
         stack_size = self._requested_stack_size
         heap_size = self._requested_heap_size
@@ -62,19 +66,22 @@ class LinkerScript:
         self._stack_size = stack_size
         self._heap_size = heap_size
 
-
     def validate(self, available_size: int):
         if self._stack_size is None or self._heap_size is None:
             raise RuntimeError(
                 "[MCU-GEN - LinkerScript] ERROR: stack_size and heap_size must be configured or inferred"
             )
         if self._stack_size <= 0:
-            raise ValueError("[MCU-GEN - LinkerScript] ERROR: stack_size should be strictly positive")
+            raise ValueError(
+                "[MCU-GEN - LinkerScript] ERROR: stack_size should be strictly positive"
+            )
         if self._heap_size <= 0:
-            raise ValueError("[MCU-GEN - LinkerScript] ERROR: heap_size should be strictly positive")
+            raise ValueError(
+                "[MCU-GEN - LinkerScript] ERROR: heap_size should be strictly positive"
+            )
         if self._stack_size + self._heap_size > available_size:
             raise RuntimeError(
-                "[MCU-GEN - LinkerScript] ERROR: " 
+                "[MCU-GEN - LinkerScript] ERROR: "
                 + "The stack and heap section must fit in the linker data region, "
                 + f"instead they take {self._stack_size + self._heap_size} bytes "
                 + f"while the data region size is {available_size} bytes."
@@ -82,10 +89,14 @@ class LinkerScript:
 
     def stack_size(self) -> int:
         if self._stack_size is None:
-            raise RuntimeError("[MCU-GEN - LinkerScript] ERROR: stack_size has not been configured or inferred")
+            raise RuntimeError(
+                "[MCU-GEN - LinkerScript] ERROR: stack_size has not been configured or inferred"
+            )
         return self._stack_size
 
     def heap_size(self) -> int:
         if self._heap_size is None:
-            raise RuntimeError("[MCU-GEN - LinkerScript] ERROR: heap_size has not been configured or inferred")
+            raise RuntimeError(
+                "[MCU-GEN - LinkerScript] ERROR: heap_size has not been configured or inferred"
+            )
         return self._heap_size

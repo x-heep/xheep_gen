@@ -41,7 +41,7 @@ class XHeep:
 
         self._memory_ss = None
 
-        self._linker_script_config : LinkerScript = None
+        self._linker_script_config: LinkerScript = None
 
         self._base_peripheral_domain = None
         self._user_peripheral_domain = None
@@ -152,12 +152,11 @@ class XHeep:
         :param LinkerScript config: The linker script configuration.
         """
 
-
         if not isinstance(linker_script_config, LinkerScript):
 
             raise TypeError(
                 f"XHeep.linker_script_config should be of type LinkerScript not {type(linker_script_config)}"
-            )        
+            )
         self._linker_script_config = linker_script_config
 
     def linker_script(self) -> LinkerScript:
@@ -324,10 +323,12 @@ class XHeep:
 
         if not self.memory_ss():
             raise RuntimeError("[MCU-GEN] ERROR: A memory subsystem must be configured")
-        
+
         if not self.linker_script():
-            raise RuntimeError("[MCU-GEN] ERROR: A linker script instance must be configured")
-        
+            raise RuntimeError(
+                "[MCU-GEN] ERROR: A linker script instance must be configured"
+            )
+
         self.memory_ss().validate()
         self.linker_script().validate(self.memory_ss().linker_data_region_size())
 
