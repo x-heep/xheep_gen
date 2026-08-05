@@ -126,10 +126,12 @@ class BasePeripheralDomain(PeripheralDomain):
 
         raise ValueError("No Power_manager peripheral found")
 
-    def validate(self):
+    def validate(self, address_length: int):
         """
         Validate the base peripheral domain. Checks if all base peripherals are added, if they don't
         overlap and if their configuration paths are valid. Checks also if dmas are valid.
+
+        :param int address_length: The length of the address space of the peripheral domain.
         """
         for dma in self.get_all_dmas():
             dma.validate()
@@ -150,4 +152,4 @@ class BasePeripheralDomain(PeripheralDomain):
                 f"[MCU-GEN - BasePeripheralDomain] ERROR: Missing base peripherals in domain {self._name}: {', '.join(missing)}"
             )
 
-        super().validate()
+        super().validate(address_length)
