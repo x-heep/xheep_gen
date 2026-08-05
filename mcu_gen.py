@@ -86,11 +86,6 @@ def generate_xheep(args):
         exit(f"Error loading pads configuration file: {args.pads_cfg}")
     xheep.set_padring(pad_ring)
 
-    try:
-        has_spi_slave = 1 if config["debug"]["has_spi_slave"] == "yes" else 0
-    except KeyError:
-        has_spi_slave = 0
-
     if args.bus != None and args.bus != "":
         xheep.set_bus_type(BusType(args.bus))
 
