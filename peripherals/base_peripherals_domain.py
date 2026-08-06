@@ -19,7 +19,7 @@ from .base_peripherals import (
     Fast_intr_ctrl,
     Ext_peripheral,
     W25Q128JW_Controller,
-    )
+)
 
 
 class BasePeripheralDomain(PeripheralDomain):
@@ -140,7 +140,6 @@ class BasePeripheralDomain(PeripheralDomain):
         raise ValueError("No W25Q128JW_Controller peripheral found")
 
     def validate(self, address_length: int, bus_type: BusType = None):
-        
         """
         Validate the base peripheral domain. Checks if all base peripherals are added, if they don't
         overlap and if their configuration paths are valid. Checks also if dmas are valid.
