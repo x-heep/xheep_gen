@@ -99,28 +99,6 @@ def generate_xheep(args):
     if args.cpu != None and args.cpu != "":
         xheep.set_cpu(CPU(args.cpu))
 
-    debug_start_address = string2int(config["debug"]["address"])
-    if int(debug_start_address, 16) < int("10000", 16):
-        exit("debug start address must be greater than 0x10000")
-
-    debug_size_address = string2int(config["debug"]["length"])
-    ext_slave_start_address = string2int(config["ext_slaves"]["address"])
-    ext_slave_size_address = string2int(config["ext_slaves"]["length"])
-
-    flash_mem_start_address = string2int(config["flash_mem"]["address"])
-    flash_mem_size_address = string2int(config["flash_mem"]["length"])
-
-    serial_link_start_address = (
-        string2int(config["serial_link"]["address"])
-        if "serial_link" in config
-        else 0x50000000
-    )
-    serial_link_size_address = (
-        string2int(config["serial_link"]["length"])
-        if "serial_link" in config
-        else 0x01000000
-    )
-
     plic_used_n_interrupts = len(config["interrupts"]["list"])
     plit_n_interrupts = config["interrupts"]["number"]
     ext_int_list = {
@@ -139,15 +117,6 @@ def generate_xheep(args):
 
     kwargs = {
         "xheep": xheep,
-        "debug_start_address": debug_start_address,
-        "debug_size_address": debug_size_address,
-        "has_spi_slave": has_spi_slave,
-        "ext_slave_start_address": ext_slave_start_address,
-        "ext_slave_size_address": ext_slave_size_address,
-        "flash_mem_start_address": flash_mem_start_address,
-        "flash_mem_size_address": flash_mem_size_address,
-        "serial_link_start_address": serial_link_start_address,
-        "serial_link_size_address": serial_link_size_address,
         "plic_used_n_interrupts": plic_used_n_interrupts,
         "plit_n_interrupts": plit_n_interrupts,
         "interrupts": interrupts,
