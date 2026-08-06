@@ -6,7 +6,9 @@
 # Description: X-HEEP System configuration.
 
 from copy import deepcopy
+
 from bus_type import BusType
+from debug_ss.debug_ss import DebugSS
 from memory_ss.memory_ss import MemorySS
 from cpu.cpu import CPU
 from cv_x_if import CvXIf
@@ -44,6 +46,7 @@ class XHeep:
         self._xif: CvXIf = None
         self._bus_type: BusType = bus_type
         self._memory_ss = None
+        self._debug_ss = None
         self._linker_script_config: LinkerScript = None
         self._address_map: AddressMap = None
         self._base_peripheral_domain = None
@@ -181,6 +184,30 @@ class XHeep:
         :rtype: int
         """
         return self._linker_script_config.heap_size()
+
+    # ------------------------------------------------------------
+    # Debug Subsystem
+    # ------------------------------------------------------------
+
+    def set_debug_ss(self, debug_ss: DebugSS):
+        """
+        Sets the debug subsystem of the system.
+
+        :param DebugSS debug_ss: The debug subsystem to set.
+        :raise TypeError: when debug_ss is of incorrect type.
+        """
+        if not isinstance(debug_ss, DebugSS):
+            raise TypeError(
+                f"XHeep.debug_ss should be of type DebugSS not {type(self._debug_ss)}"
+            )
+        self._debug_ss = debug_ss
+
+    def debug_ss(self) -> DebugSS:
+        """
+        :return: the configured debug subsystem
+        :rtype: DebugSS
+        """
+        return self._debug_ss
 
     # ------------------------------------------------------------
     # Address Map

@@ -368,6 +368,7 @@ def load_cfg_hjson(src: str) -> XHeep:
 
     load_peripherals_config(system, config, address_map)
 
+    system.set_debug_ss(debug_ss)
     system.set_address_map(address_map)
 
     return system
