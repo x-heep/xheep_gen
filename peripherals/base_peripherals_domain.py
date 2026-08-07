@@ -145,7 +145,7 @@ class BasePeripheralDomain(PeripheralDomain):
         overlap and if their configuration paths are valid. Checks also if dmas are valid.
 
         :param int address_length: The length of the address space of the peripheral domain.
-        :param BusType bus_type: The bus type of the peripheral domain.
+        :param BusType bus_type: The bus type of the system.
         """
         for dma in self.get_all_dmas():
             dma.validate()
